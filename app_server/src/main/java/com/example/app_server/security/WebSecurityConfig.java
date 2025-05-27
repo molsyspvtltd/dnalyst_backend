@@ -191,6 +191,7 @@ public class WebSecurityConfig {
                                 "/api/account/userlogin",
                                 "/api/account/login",
                                 "/api/account/verify-otp",
+                                "/api/account/resend-verification-code",
                                 "api/account/reset-password",
                                 "api/account/change-password",
                                 "api/account/logout",
@@ -213,7 +214,8 @@ public class WebSecurityConfig {
                                 "/api/exercise-details/**",
                                 "/api/diet-charts/**",
                                 "/api/diets/**",
-                                "/api/reports/**"
+                                "/api/reports/**",
+                                "/api/activity/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

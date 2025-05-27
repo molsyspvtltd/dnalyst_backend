@@ -1,20 +1,22 @@
 package com.example.app_server.dietphysio.dto;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.UserAccountCreation.User;
 
 public class CreateChartRequest {
-    private User user;
+    private Subscription subscription;
     private int chartNumber;
     private String startDate;
     private String endDate;
 
     // Getters and setters
-    public User getUser() {
-        return user;
+
+    public Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
     }
 
     public int getChartNumber() {

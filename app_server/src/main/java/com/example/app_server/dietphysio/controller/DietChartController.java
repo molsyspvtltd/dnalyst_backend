@@ -27,7 +27,7 @@ public class DietChartController {
 
     @PostMapping("/create")
     public ResponseEntity<DietChart> createChart(@RequestBody DietChartRequest request) {
-        DietChart chart = dietChartService.createDietChart(request.getUser(), request.getChartNumber(), request.getStartDate(), request.getEndDate());
+        DietChart chart = dietChartService.createDietChart(request.getSubscription(), request.getChartNumber(), request.getStartDate(), request.getEndDate());
         return new ResponseEntity<>(chart, HttpStatus.CREATED);
     }
 

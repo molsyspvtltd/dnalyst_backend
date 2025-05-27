@@ -1,6 +1,7 @@
 package com.example.app_server.dietphysio.model;
 
 
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.UserAccountCreation.User;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ public class DietChart {
     private int id;
 
     @ManyToOne
-    private  User user;
+    private Subscription subscription;
 
     @Column(unique = true)
     private int chartNumber;
@@ -35,12 +36,12 @@ public class DietChart {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
     }
 
     public int getChartNumber() {

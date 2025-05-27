@@ -28,22 +28,22 @@ public class DoctorBookingController {
     // READ all bookings for a specific user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<DoctorBooking>> getBookingsByUserId(@PathVariable String userId) {
-        List<DoctorBooking> bookings = doctorBookingRepository.findByMrnId(userId);
+        List<DoctorBooking> bookings = doctorBookingRepository.findByDnlId(userId);
         return ResponseEntity.ok(bookings);
     }
 
     // READ the latest booking time for a specific user
     @GetMapping("/user/{userId}/latest")
-    public ResponseEntity<LocalDateTime> getLastBookingTimeByUserId(@PathVariable String mrnId) {
-        LocalDateTime lastBookingTime = doctorBookingRepository.findLastBookingTimeByMrnId(mrnId);
+    public ResponseEntity<LocalDateTime> getLastBookingTimeByUserId(@PathVariable String dnlId) {
+        LocalDateTime lastBookingTime = doctorBookingRepository.findLastBookingTimeByDnlId(dnlId);
         return lastBookingTime != null ? ResponseEntity.ok(lastBookingTime) : ResponseEntity.notFound().build();
     }
 
     // UPDATE the latest Doctor booking for a specific user
     @PutMapping("/user/{userId}")
-    public ResponseEntity<DoctorBooking> updateBookingByUserId(@PathVariable String mrnId,
+    public ResponseEntity<DoctorBooking> updateBookingByUserId(@PathVariable String dnlId,
                                                                @RequestBody DoctorBooking updatedBooking) {
-        return doctorBookingRepository.findFirstByMrnIdOrderByBookingTimeDesc(mrnId)
+        return doctorBookingRepository.findFirstByDnlIdOrderByBookingTimeDesc(dnlId)
                 .map(existingBooking -> {
                     existingBooking.setBookingTime(updatedBooking.getBookingTime());
                     existingBooking.setLocation(updatedBooking.getLocation());
@@ -55,8 +55,8 @@ public class DoctorBookingController {
 
     // DELETE the latest Doctor booking for a specific user
     @DeleteMapping("/user/{userId}/latest")
-    public ResponseEntity<Object> deleteLatestBookingByUserId(@PathVariable String mrnId) {
-        return doctorBookingRepository.findFirstByMrnIdOrderByBookingTimeDesc(mrnId)
+    public ResponseEntity<Object> deleteLatestBookingByUserId(@PathVariable String dnlId) {
+        return doctorBookingRepository.findFirstByDnlIdOrderByBookingTimeDesc(dnlId)
                 .map(booking -> {
                     doctorBookingRepository.delete(booking);
                     return ResponseEntity.ok().build();

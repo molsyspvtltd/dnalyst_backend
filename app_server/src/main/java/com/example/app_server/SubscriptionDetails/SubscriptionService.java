@@ -16,7 +16,6 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
 
-
     @Autowired
     private EmailService mailService;
 
@@ -31,8 +30,8 @@ public class SubscriptionService {
         return subscriptionRepository.findAll();
     }
 
-    public Optional<Subscription> getSubscriptionById(String id) {
-        return subscriptionRepository.findById(id);
+    public Optional<Subscription> getSubscriptionById(String dnlId) {
+        return subscriptionRepository.findById(dnlId);
     }
 
     @Transactional
@@ -54,7 +53,7 @@ public class SubscriptionService {
         }
 
         subscription.setUser(user); // Set the managed user entity
-        subscription.setId(generateSubscriptionId());
+        subscription.setDnlId(generateSubscriptionId());
         subscription.setStatus(SubscriptionStatus.PENDING);
 
         return subscriptionRepository.save(subscription);
@@ -62,21 +61,21 @@ public class SubscriptionService {
 
 
 
-    public Subscription updateSubscription(String id, Subscription updatedSubscription) {
-        return subscriptionRepository.findById(id).map(subscription -> {
+    public Subscription updateSubscription(String dnlId, Subscription updatedSubscription) {
+        return subscriptionRepository.findById(dnlId).map(subscription -> {
             subscription.setProduct(updatedSubscription.getProduct());
             subscription.setUser(updatedSubscription.getUser());
             subscription.setDateOfPurchase(updatedSubscription.getDateOfPurchase());
             subscription.setPayment_method(updatedSubscription.getPayment_method());
             subscription.setAmount(updatedSubscription.getAmount());
             return subscriptionRepository.save(subscription);
-        }).orElseThrow(() -> new RuntimeException("Subscription not found with id " + id));
+        }).orElseThrow(() -> new RuntimeException("Subscription not found with id " + dnlId));
     }
 
     @Transactional
-    public Subscription updateSubscriptionStatus(String id, String statusStr) {
+    public Subscription updateSubscriptionStatus(String dnlId, String statusStr) {
         SubscriptionStatus newStatus = SubscriptionStatus.valueOf(statusStr.toUpperCase());
-        Subscription subscription = subscriptionRepository.findById(id)
+        Subscription subscription = subscriptionRepository.findById(dnlId)
                 .orElseThrow(() -> new RuntimeException("Subscription not found."));
 
         User user = subscription.getUser();
@@ -85,7 +84,7 @@ public class SubscriptionService {
             List<Subscription> existing = subscriptionRepository.findByUserAndStatus(user, SubscriptionStatus.APPROVED);
 
             boolean alreadyActive = existing.stream()
-                    .anyMatch(s -> !s.getId().equals(subscription.getId()));
+                    .anyMatch(s -> !s.getDnlId().equals(subscription.getDnlId()));
 
             if (alreadyActive) {
                 throw new RuntimeException("User already has an active subscription.");
@@ -130,19 +129,19 @@ public class SubscriptionService {
     }
 
 
-    public void deleteSubscription(String id) {
-        subscriptionRepository.deleteById(id);
+    public void deleteSubscription(String dnlId) {
+        subscriptionRepository.deleteById(dnlId);
     }
 
     // Helper method to generate a custom ID
     private String generateSubscriptionId() {
         // Find the last inserted ID
-        String lastId = subscriptionRepository.findTopByOrderByIdDesc()
-                .map(Subscription::getId)
-                .orElse("SUB000"); // Default to "SUB000" if no record exists
+        String lastDnlId = subscriptionRepository.findTopByOrderByDnlIdDesc()
+                .map(Subscription::getDnlId)
+                .orElse("DNL10000"); // Default to "SUB000" if no record exists
 
         // Extract the numeric part, increment it, and format it back to SUB001 format
-        int newIdNum = Integer.parseInt(lastId.substring(3)) + 1;
+        int newIdNum = Integer.parseInt(lastDnlId.substring(3)) + 1;
         return String.format("SUB%03d", newIdNum); // Formats the number to three digits
     }
 }

@@ -15,7 +15,8 @@ public class LoginStatus {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mrnId", referencedColumnName = "mrnId", nullable = false)
-    @JsonIgnore
+    //@JsonIgnore
+    @JsonBackReference
     private User user;
 
     @Column(name = "email")

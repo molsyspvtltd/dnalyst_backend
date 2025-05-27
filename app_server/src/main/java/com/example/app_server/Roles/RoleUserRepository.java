@@ -29,7 +29,7 @@ public interface RoleUserRepository extends JpaRepository<RoleUser, String> {
         return findByRole(Role.SUB_ADMIN);
     }
 
-    List<RoleUser> findByManagedBy(RoleUser subAdmin);
+    List<RoleUser> findByManagedBy(RoleUser managedBy);
 
     default List<RoleUser> findAllStaff() {
         return findByRole(Role.STAFF);

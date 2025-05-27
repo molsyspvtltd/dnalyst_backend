@@ -1,5 +1,7 @@
 package com.example.app_server.ReportData;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.SubscriptionDetails.SubscriptionRepository;
 import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.UserAccountCreation.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,7 +19,7 @@ import java.time.LocalDateTime;
 @Service
 public class ReportService {
 
-    @Autowired private UserRepository userRepository;
+    @Autowired private SubscriptionRepository subscriptionRepository;
     @Autowired private ReportRepository reportRepository;
     @Autowired private ReportTypeRepository reportTypeRepository;
     @Autowired private SubcategoryRepository subcategoryRepository;
@@ -27,11 +29,11 @@ public class ReportService {
 
 
     @Transactional
-    public void uploadReportFromJson(String mrnId, MultipartFile file) throws Exception {
-        User user = userRepository.findByMrnId(mrnId)
+    public void uploadReportFromJson(String dnlId, MultipartFile file) throws Exception {
+        Subscription subscription = subscriptionRepository.findByDnlId(dnlId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (reportRepository.findByUser(user).isPresent()) {
+        if (reportRepository.findBySubscription(subscription).isPresent()) {
             throw new RuntimeException("User already has a report");
         }
 
@@ -45,7 +47,7 @@ public class ReportService {
 
         Report report = new Report();
         report.setId(generateCustomId());
-        report.setUser(user);
+        report.setSubscription(subscription);
         report.setReportType(reportType);
         report.setCreatedAt(LocalDateTime.now());
         report = reportRepository.save(report);
@@ -111,13 +113,13 @@ public class ReportService {
     }
 
     @Transactional
-    public void deleteReportByMrnId(String mrnId) {
+    public void deleteReportByDnlId(String dnlId) {
         // 1. Find user and get report ID
-        User user = userRepository.findByMrnId(mrnId)
-                .orElseThrow(() -> new RuntimeException("User not found with MRN ID: " + mrnId));
+        Subscription subscription = subscriptionRepository.findByDnlId(dnlId)
+                .orElseThrow(() -> new RuntimeException("User not found with DNL ID: " + dnlId));
 
-        Long reportId = reportRepository.findReportIdByUser(user)
-                .orElseThrow(() -> new RuntimeException("No report found for user: " + mrnId));
+        Long reportId = reportRepository.findReportIdBySubscription(subscription)
+                .orElseThrow(() -> new RuntimeException("No report found for user: " + dnlId));
 
         // 2. Delete in proper order using JPQL
         try {
@@ -143,17 +145,17 @@ public class ReportService {
         }
     }
 
-    public String getReportAsJson(String mrnId) throws Exception {
-        User user = userRepository.findByMrnId(mrnId)
+    public String getReportAsJson(String dnlId) throws Exception {
+        Subscription subscription = subscriptionRepository.findByDnlId(dnlId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Report report = reportRepository.findByUser(user)
+        Report report = reportRepository.findBySubscription(subscription)
                 .orElseThrow(() -> new RuntimeException("No report found for user"));
 
         // You can construct the JSON manually or using Jackson
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> response = new HashMap<>();
-        response.put("mrnId", mrnId);
+        response.put("dnlId", dnlId);
         response.put("reportType", report.getReportType().getName());
         response.put("createdAt", report.getCreatedAt().toString());
 

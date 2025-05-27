@@ -227,7 +227,7 @@ public class AccountService {
             LocalDateTime codeTime = user.getVerificationCodeGeneratedAt();
             if (codeTime != null) {
                 long secondsElapsed = Duration.between(codeTime, LocalDateTime.now()).getSeconds();
-                if (secondsElapsed <= 60) {
+                if (secondsElapsed <= 120) {
                     user.setVerified(true);
                     user.setVerificationCode(null);
                     user.setVerificationCodeGeneratedAt(null);
@@ -241,7 +241,26 @@ public class AccountService {
         return "invalid";
     }
 
+    public boolean resendVerificationCode(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user != null && !user.isVerified()) {
+            String newCode = generateVerificationCode(); // Implement this method
+            user.setVerificationCode(newCode);
+            user.setVerificationCodeGeneratedAt(LocalDateTime.now());
+            userRepository.save(user);
 
+            String subject = "Your New Verification Code";
+            String body = "Dear " + user.getFirstName() + ",\n\n"
+                    + "Your new verification code is: " + newCode + "\n"
+                    + "This code will expire in 120 seconds.\n\n"
+                    + "Regards,\nYour App Team";
+
+            emailService.sendEmail(user.getEmail(), subject, body);
+
+            return true;
+        }
+        return false;
+    }
 
 
     public User completeProfile(String email, String firstName, String lastName, LocalDate dob,String occupation,String height,String weight, String gender, String phoneNumber, String age) {
@@ -303,6 +322,9 @@ public class AccountService {
         }
         return null;
     }
+
+
+
 
 
 
@@ -427,7 +449,7 @@ public class AccountService {
             LocalDateTime codeTime = user.getVerificationCodeGeneratedAt();
             if (codeTime != null) {
                 long secondsElapsed = Duration.between(codeTime, LocalDateTime.now()).getSeconds();
-                if (secondsElapsed <= 60) {
+                if (secondsElapsed <= 120) {
                     user.setPassword(passwordEncoder.encode(newPassword));
                     user.setVerificationCode(null);
                     user.setVerificationCodeGeneratedAt(null); // Clear timestamp
@@ -507,7 +529,7 @@ public class AccountService {
                     "Thank you for registering with us.\n\n" +
                     "To complete your registration, please use the following verification code:\n\n" +
                     verificationCode + "\n\n" +
-                    "This code is only valid for 60 seconds!!!.\n\n" +
+                    "This code is only valid for 120 seconds!!!.\n\n" +
                     "If you did not initiate this request, please ignore this email.\n\n" +
                     "Best regards,\n" +
                     "The Support Team\n" +
@@ -518,7 +540,7 @@ public class AccountService {
                     "We received a request to reset your account password.\n\n" +
                     "Please use the following verification code to reset your password:\n\n" +
                     verificationCode + "\n\n" +
-                    "This code is only valid for 60 seconds!!!.\n\n" +
+                    "This code is only valid for 120 seconds!!!.\n\n" +
                     "If you did not request a password reset, please ignore this email.\n\n" +
                     "Best regards,\n" +
                     "The Support Team\n" +

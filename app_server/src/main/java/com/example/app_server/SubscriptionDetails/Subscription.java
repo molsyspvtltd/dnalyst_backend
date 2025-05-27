@@ -1,8 +1,10 @@
 package com.example.app_server.SubscriptionDetails;
 
 import com.example.app_server.ProductDetails.Product;
+import com.example.app_server.ReportData.Report;
 import com.example.app_server.UserAccountCreation.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -13,8 +15,8 @@ import java.time.LocalDate;
 public class Subscription {
 
     @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private String id;
+    @Column(name = "dnlId", nullable = false, updatable = false)
+    private String dnlId;
 
     @ManyToOne
     @JoinColumn(name = "productId", referencedColumnName = "productId", nullable = false)
@@ -42,12 +44,17 @@ public class Subscription {
     private SubscriptionStatus status = SubscriptionStatus.PENDING;
     // Getters and Setters
 
-    public String getId() {
-        return id;
+    @OneToOne(mappedBy = "subscription", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Report report;
+
+
+    public String getDnlId() {
+        return dnlId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setDnlId(String dnlId) {
+        this.dnlId = dnlId;
     }
 
     public Product getProduct() {
@@ -104,5 +111,13 @@ public class Subscription {
 
     public void setStatus(SubscriptionStatus status) {
         this.status = status;
+    }
+
+    public Report getReport() {
+        return report;
+    }
+
+    public void setReport(Report report) {
+        this.report = report;
     }
 }

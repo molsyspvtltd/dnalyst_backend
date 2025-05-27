@@ -17,7 +17,7 @@ public class ExerciseChartController {
 
     @PostMapping("/create")
     public ResponseEntity<ExerciseChart> createChart(@RequestBody CreateChartRequest request) {
-        ExerciseChart chart = exerciseChartService.createExerciseChart(request.getUser(), request.getChartNumber(), request.getStartDate(), request.getEndDate());
+        ExerciseChart chart = exerciseChartService.createExerciseChart(request.getSubscription(), request.getChartNumber(), request.getStartDate(), request.getEndDate());
         return new ResponseEntity<>(chart, HttpStatus.CREATED);
     }
     @DeleteMapping("/{chartNumber}")

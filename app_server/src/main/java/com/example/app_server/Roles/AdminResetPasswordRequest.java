@@ -1,21 +1,19 @@
 package com.example.app_server.Roles;
 
-public class PasswordChangeRequest {
-    private String oldPassword;
+public class AdminResetPasswordRequest {
+    private String userEmail;
     private String newPassword;
 
-    public String getOldPassword() {
-        return oldPassword;
+    public String getUserEmail() {
+        return userEmail;
     }
-
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public String getNewPassword() {
         return newPassword;
     }
-
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }

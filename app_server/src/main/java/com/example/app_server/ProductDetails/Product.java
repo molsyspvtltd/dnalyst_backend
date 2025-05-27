@@ -1,7 +1,7 @@
 
 package com.example.app_server.ProductDetails;
 
-import com.example.app_server.CartDetails.Cart;
+//import com.example.app_server.CartDetails.Cart;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -19,24 +19,9 @@ public class Product {
     private Double price;
     private String image;
 
-    @OneToMany(mappedBy = "product")
-    private Set<Cart> carts; // Change from UserProduct to Cart
+//    @OneToMany(mappedBy = "product")
+//    private Set<Cart> carts; // Change from UserProduct to Cart
 
-    // Generate a unique ID before persisting a new Product
-//    @PrePersist
-//    private void generateProductId() {
-//        if (this.productId == null) {
-//            this.productId = generateUniqueProductId();
-//        }
-//    }
-//
-//    private String generateUniqueProductId() {
-//        // Example logic to generate unique ID in the format "DNLPI00001"
-//        // This should be replaced with actual logic to fetch the last ID from the database
-//        String lastProductId = "DNLPI00000"; // Placeholder for example
-//        int nextId = Integer.parseInt(lastProductId.substring(5)) + 1;
-//        return String.format("DNLPI%05d", nextId);
-//    }
     public void generateProductId(ProductRepository productRepository) {
         if (this.productId == null) {
             this.productId = generateUniqueProductId(productRepository);
@@ -86,11 +71,11 @@ public class Product {
         this.image = image;
     }
 
-    public Set<Cart> getCarts() {
-        return carts;
-    }
-
-    public void setCarts(Set<Cart> carts) {
-        this.carts = carts;
-    }
+//    public Set<Cart> getCarts() {
+//        return carts;
+//    }
+//
+//    public void setCarts(Set<Cart> carts) {
+//        this.carts = carts;
+//    }
 }

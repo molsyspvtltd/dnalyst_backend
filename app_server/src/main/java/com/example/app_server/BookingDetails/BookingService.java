@@ -1,5 +1,10 @@
 package com.example.app_server.BookingDetails;
 
+import com.example.app_server.Roles.Role;
+import com.example.app_server.Roles.RoleUser;
+import com.example.app_server.Roles.RoleUserRepository;
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.SubscriptionDetails.SubscriptionRepository;
 import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.UserAccountCreation.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -203,6 +208,9 @@ public class BookingService {
     private UserRepository userRepository;
 
     @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
     private CounsellorBookingRepository counsellorBookingRepository;
 
     @Autowired
@@ -217,6 +225,9 @@ public class BookingService {
     @Autowired
     private PhysiotherapistBookingRepository physiotherapistBookingRepository;
 
+    @Autowired
+    private RoleUserRepository roleUserRepository;
+
 
     private String generateBookingCode(String prefix, JpaRepository<? extends BaseBooking, String> repo) {
         long count = repo.count() + 1;
@@ -227,27 +238,32 @@ public class BookingService {
      */
     public ResponseEntity<String> bookCounsellor(CounsellorBookingRequest request) {
         try {
-            User user = userRepository.findByMrnId(request.getMrnId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            Subscription subscription = subscriptionRepository.findByDnlId(request.getDnlId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
 
-            if (!user.getSubscriptionActive()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User does not have an active subscription.");
-            }
+            String dnlId = subscription.getDnlId();
 
-            if (checkBookingConflict(request.getMrnId(), request.getBookingTime(), "COUNSELLOR")) {
+            if (checkBookingConflict(dnlId, request.getBookingTime(), "COUNSELLOR")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("You already have a Counsellor session booked for this day.");
             }
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
 
-            // Generate booking code using the helper method
+            RoleUser assignedCounsellor = null;
+            if (request.getAssignedToId() != null) {
+                assignedCounsellor = roleUserRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned Counsellor not found."));
+                if (assignedCounsellor.getRole() != Role.COUNSELLOR) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assigned user is not a Counsellor.");
+                }
+            }
+
             String bookingCode = generateBookingCode("COUN", counsellorBookingRepository);
 
-            // Check if the user has any recent bookings
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
+            checkBookingGap(dnlId, request.getBookingTime());
 
             CounsellorBooking booking = new CounsellorBooking();
             booking.setBookingCode(bookingCode);
-            booking.setUser(user);
+            booking.setSubscription(subscription);
+            booking.setAssignedTo(assignedCounsellor);
             booking.setBookingType(request.getBookingType());
             booking.setBookingTime(request.getBookingTime());
 
@@ -265,35 +281,48 @@ public class BookingService {
         }
     }
 
+
     /**
      * Book a Phlebotomist session (offline only).
      */
     public ResponseEntity<String> bookPhlebotomist(PhlebotomistBookingRequest request) {
         try {
+            Subscription subscription = subscriptionRepository.findByDnlId(request.getDnlId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
 
-            if (!counsellorBookingRepository.existsByMrnId(request.getMrnId())) {
+            String dnlId = subscription.getDnlId();
+
+            if (!counsellorBookingRepository.existsByDnlId(dnlId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User must complete Counsellor booking first.");
             }
+
             if (request.getBookingType() != BookingType.OFFLINE) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Phlebotomist bookings are allowed only in OFFLINE mode.");
             }
-            if (checkBookingConflict(request.getMrnId(), request.getBookingTime(), "PHLEBOTOMIST")) {
+
+            if (checkBookingConflict(dnlId, request.getBookingTime(), "PHLEBOTOMIST")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("You already have a Phlebotomist session booked for this day.");
             }
 
+            RoleUser assignedPhlebotomist = null;
+            if (request.getAssignedToId() != null) {
+                assignedPhlebotomist = roleUserRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned Phlebotomist not found."));
 
+                if (assignedPhlebotomist.getRole() != Role.PHLEBOTOMIST) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assigned user is not a Phlebotomist.");
+                }
+            }
 
-            User user = userRepository.findByMrnId(request.getMrnId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            String bookingCode = generateBookingCode("PHL", phlebotomistBookingRepository);
 
-            String bookingCode = generateBookingCode("BKPHL", phlebotomistBookingRepository);
-            // Check if the user has any recent bookings
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
+            checkBookingGap(dnlId, request.getBookingTime());
 
             PhlebotomistBooking booking = new PhlebotomistBooking();
             booking.setBookingCode(bookingCode);
-            booking.setUser(user);
+            booking.setSubscription(subscription);
             booking.setBookingType(BookingType.OFFLINE);
+            booking.setAssignedTo(assignedPhlebotomist);
             booking.setBookingTime(request.getBookingTime());
             booking.setLocation(request.getLocation());
 
@@ -305,30 +334,42 @@ public class BookingService {
         }
     }
 
+
     /**
      * Book a Doctor session.
      */
     public ResponseEntity<String> bookDoctor(DoctorBookingRequest request) {
         try {
-            if (!phlebotomistBookingRepository.existsByMrnId(request.getMrnId())) {
+            Subscription subscription = subscriptionRepository.findByDnlId(request.getDnlId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+
+            String dnlId = subscription.getDnlId();
+
+            if (!phlebotomistBookingRepository.existsByDnlId(dnlId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User must complete Phlebotomist booking first.");
             }
 
-            User user = userRepository.findByMrnId(request.getMrnId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-            if (checkBookingConflict(request.getMrnId(), request.getBookingTime(), "DOCTOR")) {
+            if (checkBookingConflict(dnlId, request.getBookingTime(), "DOCTOR")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("You already have a Doctor session booked for this day.");
             }
 
+            RoleUser assignedDoctor = null;
+            if (request.getAssignedToId() != null) {
+                assignedDoctor = roleUserRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned Doctor not found."));
 
-            String bookingCode = generateBookingCode("BKDOC", doctorBookingRepository);
-            // Check if the user has any recent bookings
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
+                if (assignedDoctor.getRole() != Role.DOCTOR) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assigned user is not a Doctor.");
+                }
+            }
+
+            String bookingCode = generateBookingCode("DOC", doctorBookingRepository);
+            checkBookingGap(dnlId, request.getBookingTime());
 
             DoctorBooking booking = new DoctorBooking();
             booking.setBookingCode(bookingCode);
-            booking.setUser(user);
+            booking.setSubscription(subscription);
+            booking.setAssignedTo(assignedDoctor);
             booking.setBookingType(request.getBookingType());
             booking.setBookingTime(request.getBookingTime());
 
@@ -346,29 +387,42 @@ public class BookingService {
         }
     }
 
+
     /**
      * Book a Dietician session.
      */
     public ResponseEntity<String> bookDietician(DieticianBookingRequest request) {
         try {
-            if (!doctorBookingRepository.existsByMrnId(request.getMrnId())) {
+            Subscription subscription = subscriptionRepository.findByDnlId(request.getDnlId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+
+            String dnlId = subscription.getDnlId();
+
+            if (!doctorBookingRepository.existsByDnlId(dnlId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User must complete Doctor booking first.");
             }
 
-            User user = userRepository.findByMrnId(request.getMrnId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-            if (checkBookingConflict(request.getMrnId(), request.getBookingTime(), "DIETICIAN")) {
+            if (checkBookingConflict(dnlId, request.getBookingTime(), "DIETICIAN")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("You already have a Dietician session booked for this day.");
             }
 
-            String bookingCode = generateBookingCode("BKDIT", dieticianBookingRepository);
-            // Check if the user has any recent bookings
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
+            RoleUser assignedDietician = null;
+            if (request.getAssignedToId() != null) {
+                assignedDietician = roleUserRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned Dietician not found."));
+
+                if (assignedDietician.getRole() != Role.DIETICIAN) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assigned user is not a Dietician.");
+                }
+            }
+
+            String bookingCode = generateBookingCode("DIT", dieticianBookingRepository);
+            checkBookingGap(dnlId, request.getBookingTime());
 
             DieticianBooking booking = new DieticianBooking();
             booking.setBookingCode(bookingCode);
-            booking.setUser(user);
+            booking.setSubscription(subscription);
+            booking.setAssignedTo(assignedDietician);
             booking.setBookingType(request.getBookingType());
             booking.setBookingTime(request.getBookingTime());
 
@@ -386,30 +440,42 @@ public class BookingService {
         }
     }
 
+
     /**
      * Book a Physiotherapist session.
      */
     public ResponseEntity<String> bookPhysiotherapist(PhysiotherapistBookingRequest request) {
         try {
-            if (!dieticianBookingRepository.existsByMrnId(request.getMrnId())) {
+            Subscription subscription = subscriptionRepository.findByDnlId(request.getDnlId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+
+            String dnlId = subscription.getDnlId();
+
+            if (!dieticianBookingRepository.existsByDnlId(dnlId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User must complete Dietician booking first.");
             }
 
-            User user = userRepository.findByMrnId(request.getMrnId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-            if (checkBookingConflict(request.getMrnId(), request.getBookingTime(), "PHYSIOTHERAPIST")) {
+            if (checkBookingConflict(dnlId, request.getBookingTime(), "PHYSIOTHERAPIST")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("You already have a Physiotherapist session booked for this day.");
             }
 
-            String bookingCode = generateBookingCode("BKPHY", physiotherapistBookingRepository);
+            RoleUser assignedPhysiotherapist = null;
+            if (request.getAssignedToId() != null) {
+                assignedPhysiotherapist = roleUserRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned Physiotherapist not found."));
 
-            // Check if the user has any recent bookings
-            checkBookingGap(request.getMrnId(), request.getBookingTime());
+                if (assignedPhysiotherapist.getRole() != Role.PHYSIO) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assigned user is not a Physiotherapist.");
+                }
+            }
+
+            String bookingCode = generateBookingCode("PHY", physiotherapistBookingRepository);
+            checkBookingGap(dnlId, request.getBookingTime());
 
             PhysiotherapistBooking booking = new PhysiotherapistBooking();
             booking.setBookingCode(bookingCode);
-            booking.setUser(user);
+            booking.setSubscription(subscription);
+            booking.setAssignedTo(assignedPhysiotherapist);
             booking.setBookingType(request.getBookingType());
             booking.setBookingTime(request.getBookingTime());
 
@@ -427,13 +493,14 @@ public class BookingService {
         }
     }
 
-    private void checkBookingGap(String mrnId, LocalDateTime requestedBookingTime) {
+
+    private void checkBookingGap(String dnlId, LocalDateTime requestedBookingTime) {
         // Get the most recent Counsellor, Phlebotomist, Doctor, Dietician, and Physiotherapist booking time.
-        LocalDateTime lastCounsellorBooking = counsellorBookingRepository.findLastBookingTimeByMrnId(mrnId);
-        LocalDateTime lastPhlebotomistBooking = phlebotomistBookingRepository.findLastBookingTimeByMrnId(mrnId);
-        LocalDateTime lastDoctorBooking = doctorBookingRepository.findLastBookingTimeByMrnId(mrnId);
-        LocalDateTime lastDieticianBooking = dieticianBookingRepository.findLastBookingTimeByMrnId(mrnId);
-        LocalDateTime lastPhysiotherapistBooking = physiotherapistBookingRepository.findLastBookingTimeByMrnId(mrnId);
+        LocalDateTime lastCounsellorBooking = counsellorBookingRepository.findLastBookingTimeByDnlId(dnlId);
+        LocalDateTime lastPhlebotomistBooking = phlebotomistBookingRepository.findLastBookingTimeByDnlId(dnlId);
+        LocalDateTime lastDoctorBooking = doctorBookingRepository.findLastBookingTimeByDnlId(dnlId);
+        LocalDateTime lastDieticianBooking = dieticianBookingRepository.findLastBookingTimeByDnlId(dnlId);
+        LocalDateTime lastPhysiotherapistBooking = physiotherapistBookingRepository.findLastBookingTimeByDnlId(dnlId);
 
         // Find the most recent booking time
         LocalDateTime lastBookingTime = Stream.of(lastCounsellorBooking, lastPhlebotomistBooking, lastDoctorBooking,
@@ -448,29 +515,25 @@ public class BookingService {
         }
     }
 
-    private boolean checkBookingConflict(String mrnId, LocalDateTime requestedBookingTime, String sessionType) {
+    private boolean checkBookingConflict(String dnlId, LocalDateTime requestedBookingTime, String sessionType) {
         LocalDate bookingDate = requestedBookingTime.toLocalDate();
         LocalDateTime start = bookingDate.atStartOfDay();
         LocalDateTime end = bookingDate.atTime(LocalTime.MAX);
 
         switch (sessionType.toUpperCase()) {
             case "COUNSELLOR":
-                return counsellorBookingRepository.existsByMrnIdAndBookingTimeBetween(mrnId, start, end);
+                return counsellorBookingRepository.existsByDnlIdAndBookingTimeBetween(dnlId, start, end);
             case "PHLEBOTOMIST":
-                return phlebotomistBookingRepository.existsByMrnIdAndBookingTimeBetween(mrnId, start, end);
+                return phlebotomistBookingRepository.existsByDnlIdAndBookingTimeBetween(dnlId, start, end);
             case "DOCTOR":
-                return doctorBookingRepository.existsByMrnIdAndBookingTimeBetween(mrnId, start, end);
+                return doctorBookingRepository.existsByDnlIdAndBookingTimeBetween(dnlId, start, end);
             case "DIETICIAN":
-                return dieticianBookingRepository.existsByMrnIdAndBookingTimeBetween(mrnId, start, end);
+                return dieticianBookingRepository.existsByDnlIdAndBookingTimeBetween(dnlId, start, end);
             case "PHYSIOTHERAPIST":
-                return physiotherapistBookingRepository.existsByMrnIdAndBookingTimeBetween(mrnId, start, end);
+                return physiotherapistBookingRepository.existsByDnlIdAndBookingTimeBetween(dnlId, start, end);
             default:
                 throw new IllegalArgumentException("Invalid session type");
         }
-
     }
-
-
-
 }
 

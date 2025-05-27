@@ -1,7 +1,12 @@
 package com.example.app_server.Roles;
 
 
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.UserAccountCreation.User;
+import jakarta.transaction.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -13,10 +18,6 @@ public class SubAdminController {
 
     public SubAdminController(SubAdminService subAdminService) {
         this.subAdminService = subAdminService;
-    }
-    @PutMapping("/change-password")
-    public String changePassword(@RequestParam String email, @RequestBody PasswordChangeRequest request) {
-        return subAdminService.changePassword(email, request);
     }
 
     @PostMapping("/create-staff")
@@ -32,6 +33,31 @@ public class SubAdminController {
     @DeleteMapping("/remove-staff/{staffId}")
     public String removeStaff(@PathVariable String staffId) {
         return subAdminService.deleteStaff(staffId);
+    }
+
+    @GetMapping("/assigned-clients")
+    @Transactional
+    public List<SubscriptionDTO> getMyClients() {
+        return subAdminService.getSubscriptionsAssignedToSubAdmin();
+    }
+    @GetMapping("/assigned-today")
+    public ResponseEntity<?> getTodayUsers() {
+        List<SubscriptionDTO> subs = subAdminService.getTodaySubscriptionsAssignedToSubAdmin();
+        if (subs.isEmpty()) {
+            return ResponseEntity.ok("No patients available today");
+        }
+        return ResponseEntity.ok(subs);
+    }
+    @GetMapping("/assigned-today/pending")
+    public ResponseEntity<List<SubscriptionDTO>> getTodayPendingAssignedClients() {
+        return ResponseEntity.ok(subAdminService.getTodayPendingSubscriptionsAssignedToSubAdmin());
+    }
+
+    @PostMapping("/upload-result/{bookingCode}")
+    public ResponseEntity<String> uploadBookingFile(@PathVariable String bookingCode,
+                                                    @RequestParam("file") MultipartFile file) {
+        String result = subAdminService.uploadResultAndMarkCompleted(bookingCode, file);
+        return ResponseEntity.ok(result);
     }
 
 }

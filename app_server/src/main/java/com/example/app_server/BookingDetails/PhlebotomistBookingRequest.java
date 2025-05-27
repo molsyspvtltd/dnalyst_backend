@@ -3,19 +3,21 @@ package com.example.app_server.BookingDetails;
 import java.time.LocalDateTime;
 
 public class PhlebotomistBookingRequest {
-    private String mrnId;
+    private String dnlId;
     private BookingType bookingType; // ONLINE or OFFLINE
     private LocalDateTime bookingTime;
     private String location; // For offline bookings
     private String googleMeetLink; // For online bookings
+    private String assignedToId;  // ID of the doctor/dietician/etc. to assign
+
 
     // Getters and Setters
-    public String getMrnId() {
-        return mrnId;
+    public String getDnlId() {
+        return dnlId;
     }
 
-    public void setMrnId(String mrnId) {
-        this.mrnId = mrnId;
+    public void setDnlId(String dnlId) {
+        this.dnlId = dnlId;
     }
 
     public BookingType getBookingType() {
@@ -48,6 +50,14 @@ public class PhlebotomistBookingRequest {
 
     public void setGoogleMeetLink(String googleMeetLink) {
         this.googleMeetLink = googleMeetLink;
+    }
+
+    public String getAssignedToId() {
+        return assignedToId;
+    }
+
+    public void setAssignedToId(String assignedToId) {
+        this.assignedToId = assignedToId;
     }
 }
 

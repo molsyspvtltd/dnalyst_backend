@@ -388,6 +388,22 @@ public class AccountController {
         };
     }
 
+    @PostMapping("/resend-verification-code")
+    public ResponseEntity<String> resendVerificationCode(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isEmpty()) {
+            return ResponseEntity.badRequest().body("Email is required.");
+        }
+
+        boolean success = accountService.resendVerificationCode(email);
+        if (success) {
+            return ResponseEntity.ok("Verification code resent.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to resend verification code.");
+        }
+    }
+
+
 
     @PostMapping("/complete-profile")
     public ResponseEntity<String> completeProfile(@RequestBody @Valid CompleteProfileRequest request) {
@@ -399,9 +415,9 @@ public class AccountController {
                     request.getFirstName(),
                     request.getLastName(),
                     dob,
+                    request.getOccupation(),
                     request.getHeight(),
                     request.getWeight(),
-                    request.getOccupation(),
                     request.getGender(),
                     request.getPhoneNumber(),
                     String.valueOf(request.getAge()) // Pass age as Integer

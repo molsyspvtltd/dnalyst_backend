@@ -1,5 +1,6 @@
 package com.example.app_server.dietphysio.service;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.dietphysio.model.ExerciseChart;
 import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.dietphysio.repository.ExerciseChartRepository;
@@ -18,9 +19,9 @@ public class ExerciseChartService {
     @Autowired
     private ExerciseDetailRepository exerciseDetailRepository;
 
-    public ExerciseChart createExerciseChart(User user, int chartNumber, String startDate, String endDate) {
+    public ExerciseChart createExerciseChart(Subscription subscription, int chartNumber, String startDate, String endDate) {
         ExerciseChart chart = new ExerciseChart();
-        chart.setUser(user);
+        chart.setSubscription(subscription);
         chart.setChartNumber(chartNumber);
         return exerciseChartRepository.save(chart);
     }

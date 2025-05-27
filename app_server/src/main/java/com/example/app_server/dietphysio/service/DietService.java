@@ -1,5 +1,7 @@
 package com.example.app_server.dietphysio.service;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.SubscriptionDetails.SubscriptionRepository;
 import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.UserAccountCreation.UserRepository;
 import com.example.app_server.dietphysio.model.DietChart;
@@ -23,12 +25,12 @@ import java.util.Map;
 @Service
 public class DietService {
 
-    private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final DietChartRepository dietChartRepository;
     private final DietPlanRepository dietPlanRepository;
 
-    public DietService(UserRepository userRepository, DietChartRepository dietChartRepository, DietPlanRepository dietPlanRepository) {
-        this.userRepository = userRepository;
+    public DietService(SubscriptionRepository subscriptionRepository, DietChartRepository dietChartRepository, DietPlanRepository dietPlanRepository) {
+        this.subscriptionRepository = subscriptionRepository;
         this.dietChartRepository = dietChartRepository;
         this.dietPlanRepository = dietPlanRepository;
     }
@@ -115,10 +117,10 @@ public class DietService {
 //    }
 
 
-    public void uploadDietChart(MultipartFile file, String mrnId) throws IOException {
+    public void uploadDietChart(MultipartFile file, String dnlId) throws IOException {
         // Validate user
-        User user = userRepository.findByMrnId(mrnId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + mrnId));
+        Subscription subscription = subscriptionRepository.findByDnlId(dnlId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + dnlId));
 
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -156,8 +158,8 @@ public class DietService {
 
                 // Get or create the corresponding DietChart
                 DietChart currentChart = chartMap.computeIfAbsent(chartNumber, num ->
-                        dietChartRepository.findByUserAndChartNumber(user, num)
-                                .orElseGet(() -> createNewDietChart(user, num))
+                        dietChartRepository.findBySubscriptionAndChartNumber(subscription, num)
+                                .orElseGet(() -> createNewDietChart(subscription, num))
                 );
 
                 // Create DietPlan entry
@@ -196,9 +198,9 @@ public class DietService {
         }
     }
 
-    private DietChart createNewDietChart(User user, int chartNumber) {
+    private DietChart createNewDietChart(Subscription subscription, int chartNumber) {
         DietChart dietChart = new DietChart();
-        dietChart.setUser(user);
+        dietChart.setSubscription(subscription);
         dietChart.setChartNumber(chartNumber); // Ensure the chart number is stored
         dietChartRepository.save(dietChart);
         return dietChart;

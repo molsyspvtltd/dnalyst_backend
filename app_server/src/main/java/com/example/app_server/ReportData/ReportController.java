@@ -18,10 +18,10 @@ public class ReportController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadReport(
-            @RequestParam String mrnId,
+            @RequestParam String dnlId,
             @RequestParam("file") MultipartFile file) {
         try {
-            reportService.uploadReportFromJson(mrnId, file);
+            reportService.uploadReportFromJson(dnlId, file);
             return ResponseEntity.ok("Report uploaded successfully");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -30,9 +30,9 @@ public class ReportController {
 
 
     @DeleteMapping("/delete")
-    public ResponseEntity<Map<String, Object>> deleteReport(@RequestParam String mrnId) {
+    public ResponseEntity<Map<String, Object>> deleteReport(@RequestParam String dnlId) {
         try {
-            reportService.deleteReportByMrnId(mrnId);
+            reportService.deleteReportByDnlId(dnlId);
             return ResponseEntity.ok(Map.of(
                     "status", "success",
                     "message", "Report and all related data deleted successfully",
@@ -48,9 +48,9 @@ public class ReportController {
     }
 
     @GetMapping("/get-report")
-    public ResponseEntity<String> getReportJson(@RequestParam String mrnId) {
+    public ResponseEntity<String> getReportJson(@RequestParam String dnlId) {
         try {
-            String json = reportService.getReportAsJson(mrnId);
+            String json = reportService.getReportAsJson(dnlId);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());

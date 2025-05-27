@@ -1,5 +1,7 @@
 package com.example.app_server.dietphysio.service;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.SubscriptionDetails.SubscriptionRepository;
 import com.example.app_server.dietphysio.model.ExerciseChart;
 import com.example.app_server.dietphysio.model.ExerciseDetail;
 import com.example.app_server.UserAccountCreation.User;
@@ -193,7 +195,7 @@ import java.util.Optional;
 public class ExcelService {
 
     @Autowired
-    private UserRepository userRepository;
+    private SubscriptionRepository subscriptionRepository;
 
     @Autowired
     private ExerciseChartRepository exerciseChartRepository;
@@ -204,15 +206,15 @@ public class ExcelService {
     private static final Logger logger = LoggerFactory.getLogger(ExcelService.class);
 
     @Transactional
-    public ResponseEntity<String> assignExercisesToUser(String mrnId, MultipartFile file) {
+    public ResponseEntity<String> assignExercisesToUser(String dnlId, MultipartFile file) {
         // Fetch the user by MRN ID
-        Optional<User> userOptional = userRepository.findByMrnId(mrnId);
-        if (userOptional.isEmpty()) {
-            String errorMessage = "User with MRN ID " + mrnId + " not found.";
+        Optional<Subscription> subscriptionOptional = subscriptionRepository.findByDnlId(dnlId);
+        if (subscriptionOptional.isEmpty()) {
+            String errorMessage = "User with DNL ID " + dnlId + " not found.";
             logger.error(errorMessage);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
         }
-        User user = userOptional.get();
+        Subscription subscription = subscriptionOptional.get();
 
         // Process the Excel file
         if (file == null || file.isEmpty()) {
@@ -249,10 +251,10 @@ public class ExcelService {
                 int chartNumber = (int) Math.ceil(day / 15.0);
 
                 // Retrieve or create a new exercise chart for the user
-                ExerciseChart chart = exerciseChartRepository.findByUserAndChartNumber(user, chartNumber)
+                ExerciseChart chart = exerciseChartRepository.findBySubscriptionAndChartNumber(subscription, chartNumber)
                         .orElseGet(() -> {
                             ExerciseChart newChart = new ExerciseChart();
-                            newChart.setUser(user);
+                            newChart.setSubscription(subscription);
                             newChart.setChartNumber(chartNumber);
                             return exerciseChartRepository.save(newChart);
                         });
@@ -280,7 +282,7 @@ public class ExcelService {
             return ResponseEntity.ok(successMessage);
 
         } catch (Exception e) {
-            String errorMessage = "Failed to process Excel file for user with MRN ID " + mrnId;
+            String errorMessage = "Failed to process Excel file for user with DNL ID " + dnlId;
             logger.error(errorMessage, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
         }

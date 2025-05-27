@@ -8,5 +8,6 @@ public enum Role {
     DIETICIAN,
     PHYSIO,
     LAB,
+    COUNSELLOR,
     STAFF
 }

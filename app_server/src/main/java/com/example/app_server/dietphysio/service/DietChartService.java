@@ -1,5 +1,6 @@
 package com.example.app_server.dietphysio.service;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.dietphysio.model.DietChart;
 import com.example.app_server.dietphysio.repository.DietChartRepository;
@@ -28,9 +29,9 @@ public class DietChartService {
     }
 
     // Create a new DietChart
-    public DietChart createDietChart(User user, int chartNumber, String startDate, String endDate) {
+    public DietChart createDietChart(Subscription subscription, int chartNumber, String startDate, String endDate) {
         DietChart dietChart = new DietChart();
-        dietChart.setUser(user);
+        dietChart.setSubscription(subscription);
         dietChart.setChartNumber(chartNumber);
         return dietChartRepository.save(dietChart);
     }

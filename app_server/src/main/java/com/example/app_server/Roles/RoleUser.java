@@ -34,6 +34,7 @@ public class RoleUser implements UserDetails {
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 30)
     private Role role;
 
     @ManyToOne
@@ -72,5 +73,4 @@ public class RoleUser implements UserDetails {
 
     @Override
     public boolean isEnabled() { return true; }
-
 }

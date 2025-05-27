@@ -1,5 +1,7 @@
 package com.example.app_server.BookingDetails;
 
+import com.example.app_server.Roles.RoleUser;
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.UserAccountCreation.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -12,8 +14,8 @@ public abstract class BaseBooking {
     private String bookingCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mrnId", nullable = false)
-    private User user;
+    @JoinColumn(name = "dnlId", nullable = false)
+    private Subscription subscription;
 
     @Column(name = "booking_time", nullable = false)
     private LocalDateTime bookingTime;
@@ -28,6 +30,16 @@ public abstract class BaseBooking {
     @Column(name = "google_meet_link")
     private String googleMeetLink; // For online bookings
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_id")
+    private RoleUser assignedTo; // Sub-Admin assigned to this booking
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private BookingStatus status = BookingStatus.PENDING;
+
+    @Column(name = "file_path")
+    private String filePath;
 
     public String getBookingCode() {
         return bookingCode;
@@ -37,12 +49,12 @@ public abstract class BaseBooking {
         this.bookingCode = bookingCode;
     }
 
-    public User getUser() {
-        return user;
+    public Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
     }
 
     public LocalDateTime getBookingTime() {
@@ -75,6 +87,30 @@ public abstract class BaseBooking {
 
     public void setGoogleMeetLink(String googleMeetLink) {
         this.googleMeetLink = googleMeetLink;
+    }
+
+    public RoleUser getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(RoleUser assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
+    public BookingStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BookingStatus status) {
+        this.status = status;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 }
 

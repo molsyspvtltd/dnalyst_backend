@@ -104,6 +104,7 @@
 //}
 package com.example.app_server.UserAccountCreation;
 
+import com.example.app_server.DailyActivities.DailyActivity;
 import com.example.app_server.ReportData.Report;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -122,6 +123,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+
 public class User {
 
     @Id
@@ -156,12 +158,10 @@ public class User {
     private Boolean subscriptionActive = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     @JsonManagedReference
     private List<LoginStatus> loginStatuses = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Report report;
 
     @Column(name = "device_info", length = 500)
     private String deviceInfo; // Stores user device details
@@ -175,6 +175,10 @@ public class User {
     @Column(name = "sns_endpoint_arn", length = 500)
     private String snsEndpointArn;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @JsonManagedReference
+    private List<DailyActivity> dailyActivities = new ArrayList<>();
 
 //    public Report getReport() {
 //        return report;

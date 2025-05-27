@@ -12,10 +12,11 @@ import java.util.Optional;
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, String> {
     // Additional query methods if needed
+    Optional<Subscription> findByDnlId(String dnlId);
 
     // Example: Find by user ID (if needed in the future)
     Optional<Subscription> findByUser(User user);
-    Optional<Subscription> findTopByOrderByIdDesc();
+    Optional<Subscription> findTopByOrderByDnlIdDesc();
     List<Subscription> findByUserAndStatus(User user, SubscriptionStatus status);
 
     @Query("SELECT s FROM Subscription s WHERE s.user.mrnId = :mrnId AND s.paid = true")

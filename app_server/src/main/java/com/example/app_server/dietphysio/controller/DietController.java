@@ -23,9 +23,9 @@ public class DietController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadDietChart(
             @RequestParam(value = "files") MultipartFile[] files, // Changed to accept an array of files
-            @RequestParam(value = "mrnId", required = true) String mrnId) {
+            @RequestParam(value = "dnlId", required = true) String dnlId) {
         try {
-            logger.info("Received request to upload diet charts for userId: {}", mrnId);
+            logger.info("Received request to upload diet charts for userId: {}", dnlId);
 
             // Validate files
             if (files == null || files.length == 0) {
@@ -48,13 +48,13 @@ public class DietController {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("One of the files is empty");
                 }
                 // Call service to upload each chart
-                dietService.uploadDietChart(file, mrnId);
+                dietService.uploadDietChart(file, dnlId);
             }
 
-            logger.info("Diet charts uploaded successfully for userId: {}", mrnId);
+            logger.info("Diet charts uploaded successfully for userId: {}", dnlId);
             return ResponseEntity.ok("Diet charts uploaded successfully");
         } catch (Exception e) {
-            logger.error("Failed to upload diet charts for userId: {}", mrnId, e);
+            logger.error("Failed to upload diet charts for userId: {}", dnlId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload diet charts");
         }
     }

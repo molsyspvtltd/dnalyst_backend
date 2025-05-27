@@ -18,10 +18,10 @@ class ExcelController {
     @Autowired
     private ExcelService excelService;
 
-    @PostMapping("/assignExercises/{mrnId}")
-    public ResponseEntity<String> assignExercisesToUser(@PathVariable String mrnId, @RequestParam("file") MultipartFile file) {
+    @PostMapping("/assignExercises/{dnlId}")
+    public ResponseEntity<String> assignExercisesToUser(@PathVariable String dnlId, @RequestParam("file") MultipartFile file) {
         try {
-            excelService.assignExercisesToUser(mrnId, file);
+            excelService.assignExercisesToUser(dnlId, file);
             return ResponseEntity.ok("Exercises assigned successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error assigning exercises: " + e.getMessage());

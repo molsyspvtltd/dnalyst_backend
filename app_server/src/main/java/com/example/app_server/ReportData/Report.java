@@ -1,5 +1,6 @@
 package com.example.app_server.ReportData;
 
+import com.example.app_server.SubscriptionDetails.Subscription;
 import com.example.app_server.UserAccountCreation.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -15,7 +16,7 @@ public class Report {
     private String id;
 
     @ManyToOne
-    private User user;
+    private Subscription subscription;
 
     @ManyToOne
     private ReportType reportType;
@@ -37,12 +38,12 @@ public class Report {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
     }
 
     public ReportType getReportType() {

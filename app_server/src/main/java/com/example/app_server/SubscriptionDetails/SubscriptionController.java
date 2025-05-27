@@ -23,9 +23,9 @@ public class SubscriptionController {
         return subscriptionService.getAllSubscriptions();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Subscription> getSubscriptionById(@PathVariable String id) {
-        return subscriptionService.getSubscriptionById(id)
+    @GetMapping("/{dnlId}")
+    public ResponseEntity<Subscription> getSubscriptionById(@PathVariable String dnlId) {
+        return subscriptionService.getSubscriptionById(dnlId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -42,24 +42,24 @@ public class SubscriptionController {
     }
 
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSubscription(@PathVariable String id, @RequestBody Subscription subscription) {
+    @PutMapping("/{dnlId}")
+    public ResponseEntity<?> updateSubscription(@PathVariable String dnlId, @RequestBody Subscription subscription) {
         try {
             // Ensure that update is only performed if the subscription exists
-            Subscription updatedSubscription = subscriptionService.updateSubscription(id, subscription);
+            Subscription updatedSubscription = subscriptionService.updateSubscription(dnlId, subscription);
             return ResponseEntity.ok(updatedSubscription);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         }
     }
 
-    @PutMapping("/{id}/status")
+    @PutMapping("/{dnlId}/status")
     public ResponseEntity<?> updateSubscriptionStatus(
-            @PathVariable String id,
+            @PathVariable String dnlId,
             @RequestParam String status
     ) {
         try {
-            subscriptionService.updateSubscriptionStatus(id, status);
+            subscriptionService.updateSubscriptionStatus(dnlId, status);
             String message = status.equalsIgnoreCase("APPROVED") ?
                     "Subscription approved successfully." :
                     "Subscription rejected.";
@@ -70,10 +70,10 @@ public class SubscriptionController {
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSubscription(@PathVariable String id) {
+    @DeleteMapping("/{dnlId}")
+    public ResponseEntity<?> deleteSubscription(@PathVariable String dnlId) {
         try {
-            subscriptionService.deleteSubscription(id);
+            subscriptionService.deleteSubscription(dnlId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());

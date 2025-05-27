@@ -27,23 +27,23 @@ public class PhysiotherapistBookingController {
 
     // READ all bookings for a specific user
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PhysiotherapistBooking>> getBookingsByUserId(@PathVariable String mrnId) {
-        List<PhysiotherapistBooking> bookings = physiotherapistBookingRepository.findByMrnId(mrnId);
+    public ResponseEntity<List<PhysiotherapistBooking>> getBookingsByUserId(@PathVariable String dnlId) {
+        List<PhysiotherapistBooking> bookings = physiotherapistBookingRepository.findByDnlId(dnlId);
         return ResponseEntity.ok(bookings);
     }
 
     // READ the latest booking time for a specific user
     @GetMapping("/user/{userId}/latest")
-    public ResponseEntity<LocalDateTime> getLastBookingTimeByUserId(@PathVariable String mrnId) {
-        LocalDateTime lastBookingTime = physiotherapistBookingRepository.findLastBookingTimeByMrnId(mrnId);
+    public ResponseEntity<LocalDateTime> getLastBookingTimeByUserId(@PathVariable String dnlId) {
+        LocalDateTime lastBookingTime = physiotherapistBookingRepository.findLastBookingTimeByDnlId(dnlId);
         return lastBookingTime != null ? ResponseEntity.ok(lastBookingTime) : ResponseEntity.notFound().build();
     }
 
     // UPDATE the latest Physiotherapist booking for a specific user
     @PutMapping("/user/{userId}")
-    public ResponseEntity<PhysiotherapistBooking> updateBookingByUserId(@PathVariable String mrnId,
+    public ResponseEntity<PhysiotherapistBooking> updateBookingByUserId(@PathVariable String dnlId,
                                                                         @RequestBody PhysiotherapistBooking updatedBooking) {
-        return physiotherapistBookingRepository.findFirstByMrnIdOrderByBookingTimeDesc(mrnId)
+        return physiotherapistBookingRepository.findFirstByDnlIdOrderByBookingTimeDesc(dnlId)
                 .map(existingBooking -> {
                     existingBooking.setBookingTime(updatedBooking.getBookingTime());
                     existingBooking.setLocation(updatedBooking.getLocation());
@@ -55,8 +55,8 @@ public class PhysiotherapistBookingController {
 
     // DELETE the latest Physiotherapist booking for a specific user
     @DeleteMapping("/user/{userId}/latest")
-    public ResponseEntity<Object> deleteLatestBookingByUserId(@PathVariable String mrnId) {
-        return physiotherapistBookingRepository.findFirstByMrnIdOrderByBookingTimeDesc(mrnId)
+    public ResponseEntity<Object> deleteLatestBookingByUserId(@PathVariable String dnlId) {
+        return physiotherapistBookingRepository.findFirstByDnlIdOrderByBookingTimeDesc(dnlId)
                 .map(booking -> {
                     physiotherapistBookingRepository.delete(booking);
                     return ResponseEntity.ok().build();

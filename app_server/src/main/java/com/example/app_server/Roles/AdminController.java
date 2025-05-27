@@ -1,5 +1,6 @@
 package com.example.app_server.Roles;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,5 +54,28 @@ public class AdminController {
         adminService.removeSubAdmin(subAdminId);
         return ResponseEntity.ok("Sub-Admin and associated staff removed successfully.");
     }
+    @PutMapping("/assign-subadmin")
+    public ResponseEntity<String> assignSubAdminToBooking(@RequestParam String bookingType,
+                                                          @RequestParam String bookingId,
+                                                          @RequestParam String subAdminId) {
+        try {
+            adminService.assignSubAdminToBooking(bookingType, bookingId, subAdminId);
+            return ResponseEntity.ok("Sub-Admin assigned successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error assigning Sub-Admin: " + e.getMessage());
+        }
+    }
 
+    @GetMapping("/unassigned-bookings")
+    public ResponseEntity<?> getUnassignedBookings(@RequestParam String bookingType) {
+        try {
+            List<?> bookings = adminService.getUnassignedBookings(bookingType);
+            return ResponseEntity.ok(bookings);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }

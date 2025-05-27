@@ -1,5 +1,6 @@
 package com.example.app_server.Roles;
 
+import com.example.app_server.BookingDetails.*;
 import com.example.app_server.security.EncryptionUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,9 +15,24 @@ public class AdminService {
     private final RoleUserRepository roleuserRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminService(RoleUserRepository roleuserRepository, PasswordEncoder passwordEncoder) {
+    private final DoctorBookingRepository doctorBookingRepository;
+    private final PhlebotomistBookingRepository phlebotomistBookingRepository;
+    private final CounsellorBookingRepository counsellorBookingRepository;
+    private final DieticianBookingRepository dieticianBookingRepository;
+    private final PhysiotherapistBookingRepository physiotherapistBookingRepository;
+
+    public AdminService(RoleUserRepository roleuserRepository, PasswordEncoder passwordEncoder,DoctorBookingRepository doctorBookingRepository,
+                        PhlebotomistBookingRepository phlebotomistBookingRepository,
+                        CounsellorBookingRepository counsellorBookingRepository,
+                        DieticianBookingRepository dieticianBookingRepository,
+                        PhysiotherapistBookingRepository physiotherapistBookingRepository) {
         this.roleuserRepository = roleuserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.doctorBookingRepository = doctorBookingRepository;
+        this.phlebotomistBookingRepository = phlebotomistBookingRepository;
+        this.counsellorBookingRepository = counsellorBookingRepository;
+        this.dieticianBookingRepository = dieticianBookingRepository;
+        this.physiotherapistBookingRepository = physiotherapistBookingRepository;
     }
 
     @PostConstruct
@@ -82,6 +98,7 @@ public class AdminService {
             case DIETICIAN -> "DT";
             case PHYSIO -> "PH";
             case DOCTOR -> "DR";
+            case COUNSELLOR -> "CS";
             case LAB -> "LB";
             case PHLEBOTOMIST -> "PB";
             default -> "SA";  // Default Sub-Admin prefix
@@ -156,11 +173,83 @@ public class AdminService {
     }
 
     private boolean isValidSubAdminRole(Role role) {
-        return role == Role.SUB_ADMIN || role == Role.DOCTOR || role == Role.PHLEBOTOMIST ||
+        return role == Role.SUB_ADMIN || role == Role.DOCTOR || role == Role.PHLEBOTOMIST || role == Role.COUNSELLOR ||
                 role == Role.DIETICIAN || role == Role.PHYSIO || role == Role.LAB;
     }
 
     public List<RoleUser> getAllUsers() {
         return roleuserRepository.findAll();
+    }
+
+    public void assignSubAdminToBooking(String bookingType, String bookingId, String subAdminId) {
+        RoleUser subAdmin = roleuserRepository.findById(subAdminId)
+                .orElseThrow(() -> new IllegalArgumentException("Sub-Admin not found"));
+
+        Role subAdminRole = subAdmin.getRole();
+        String bookingTypeUpper = bookingType.toUpperCase();
+
+        // Ensure sub-admin's role matches the booking type
+        if (!isRoleValidForBookingType(bookingTypeUpper, subAdminRole)) {
+            throw new IllegalArgumentException("Sub-Admin role " + subAdminRole + " is not valid for booking type " + bookingTypeUpper);
+        }
+
+        switch (bookingTypeUpper) {
+            case "DOCTOR":
+                var doctorBooking = doctorBookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Doctor booking not found"));
+                doctorBooking.setAssignedTo(subAdmin);
+                doctorBookingRepository.save(doctorBooking);
+                break;
+            case "PHLEBOTOMIST":
+                var phlebBooking = phlebotomistBookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Phlebotomist booking not found"));
+                phlebBooking.setAssignedTo(subAdmin);
+                phlebotomistBookingRepository.save(phlebBooking);
+                break;
+            case "COUNSELLOR":
+                var counsellorBooking = counsellorBookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Counsellor booking not found"));
+                counsellorBooking.setAssignedTo(subAdmin);
+                counsellorBookingRepository.save(counsellorBooking);
+                break;
+            case "DIETICIAN":
+                var dieticianBooking = dieticianBookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Dietician booking not found"));
+                dieticianBooking.setAssignedTo(subAdmin);
+                dieticianBookingRepository.save(dieticianBooking);
+                break;
+            case "PHYSIOTHERAPIST":
+                var physioBooking = physiotherapistBookingRepository.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Physiotherapist booking not found"));
+                physioBooking.setAssignedTo(subAdmin);
+                physiotherapistBookingRepository.save(physioBooking);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid booking type: " + bookingType);
+        }
+    }
+
+    private boolean isRoleValidForBookingType(String bookingType, Role role) {
+        return switch (bookingType) {
+            case "DOCTOR" -> role == Role.DOCTOR;
+            case "PHLEBOTOMIST" -> role == Role.PHLEBOTOMIST;
+            case "COUNSELLOR" -> role == Role.COUNSELLOR;
+            case "DIETICIAN" -> role == Role.DIETICIAN;
+            case "PHYSIOTHERAPIST" -> role == Role.PHYSIO;
+            default -> false;
+        };
+    }
+
+
+    // Get all unassigned bookings for a given booking type
+    public List<?> getUnassignedBookings(String bookingType) {
+        return switch (bookingType.toUpperCase()) {
+            case "DOCTOR" -> doctorBookingRepository.findByAssignedToIsNull();
+            case "PHLEBOTOMIST" -> phlebotomistBookingRepository.findByAssignedToIsNull();
+            case "COUNSELLOR" -> counsellorBookingRepository.findByAssignedToIsNull();
+            case "DIETICIAN" -> dieticianBookingRepository.findByAssignedToIsNull();
+            case "PHYSIOTHERAPIST" -> physiotherapistBookingRepository.findByAssignedToIsNull();
+            default -> throw new IllegalArgumentException("Invalid booking type: " + bookingType);
+        };
     }
 }

@@ -1,6 +1,7 @@
 package com.example.app_server.Roles;
 
 import com.example.app_server.security.EncryptionUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,11 +9,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     private final AuthenticationManager authenticationManager;
     private final RoleUserRepository roleuserRepository;
@@ -62,6 +67,23 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             return "Error: Invalid email or password!";
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public String requestReset(@RequestBody ForgotPasswordRequest request) {
+        passwordResetService.createRequest(request);
+        return "Password reset request submitted.";
+    }
+
+    @GetMapping("/admin/pending-reset-requests")
+    public List<PasswordResetRequest> getPendingResetRequests() {
+        return passwordResetService.getPendingRequests();
+    }
+
+    @PostMapping("/admin/reset-password")
+    public String resetUserPassword(@RequestBody AdminResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return "Password has been reset by admin.";
     }
 
 }
