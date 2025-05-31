@@ -78,4 +78,27 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @GetMapping("/{id}/clients")
+    public ResponseEntity<List<SubscriptionDTO>> getClientsBySubAdminAndRole(
+            @PathVariable("id") String subAdminId,
+            @RequestParam("role") Role role) {
+        try {
+            List<SubscriptionDTO> clients = adminService.getClientsAssignedToSubAdmin(subAdminId, role);
+            return ResponseEntity.ok(clients);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/sub-admin")
+    public ResponseEntity<List<RoleUser>> getUsersByRole(@RequestParam Role role) {
+        List<RoleUser> users = adminService.getUsersByRole(role);
+        if (users.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(users);
+    }
+
+
 }

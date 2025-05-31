@@ -23,6 +23,7 @@ public interface RoleUserRepository extends JpaRepository<RoleUser, String> {
     @Query("SELECT MAX(u.id) FROM RoleUser u WHERE u.id LIKE :prefix")
     String findLastIdByPrefix(@Param("prefix") String prefix);
     List<RoleUser> findBySubAdmin(RoleUser subAdmin);
+    Optional<RoleUser> findById(String Id);
 
 
     default List<RoleUser> findAllSubAdmins() {

@@ -1,26 +1,33 @@
-
 package com.example.app_server.ProductDetails;
 
-//import com.example.app_server.CartDetails.Cart;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Set;
+import java.util.List;
 
+@Getter
+@Setter
 @Entity
 public class Product {
 
     @Id
-    private String productId; // Changed to String for custom ID format
+    private String productId;
 
     private String productName;
-    private Double price;
-    private String image;
 
-//    @OneToMany(mappedBy = "product")
-//    private Set<Cart> carts; // Change from UserProduct to Cart
+    private String description;
+
+    @Convert(converter = FeaturesConverter.class)
+    private List<String> features;
+
+    private String videoLink;
+    private Double monthlyPrice;
+    private Double quarterlyPrice;
+    private Double oneShotPrice;
+    private String image;
 
     public void generateProductId(ProductRepository productRepository) {
         if (this.productId == null) {
@@ -31,51 +38,9 @@ public class Product {
     private String generateUniqueProductId(ProductRepository productRepository) {
         String lastProductId = productRepository.findLastProductId();
         if (lastProductId == null) {
-            lastProductId = "DNLPI00000"; // Initial ID if no products exist
+            lastProductId = "DNLPI00000";
         }
         int nextId = Integer.parseInt(lastProductId.substring(5)) + 1;
         return String.format("DNLPI%05d", nextId);
     }
-
-
-    // Getters and Setters
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-//    public Set<Cart> getCarts() {
-//        return carts;
-//    }
-//
-//    public void setCarts(Set<Cart> carts) {
-//        this.carts = carts;
-//    }
 }

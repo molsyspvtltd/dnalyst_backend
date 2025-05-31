@@ -188,24 +188,29 @@ public class AccountService {
 //    }
 
 
-    public User createAccount(String email, String password) {
+    public User createAccount(String email, String password, String confirmPassword) {
+        if (!password.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Passwords do not match.");
+        }
+
         if (userRepository.findByEmail(email) != null) {
             throw new IllegalArgumentException("Email is already in use.");
         }
 
         User user = new User();
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password)); // Secure password
+        user.setPassword(passwordEncoder.encode(password));
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeGeneratedAt(LocalDateTime.now());
         user.setVerified(false);
         user.setMrnId(generatemrnId());
-        userRepository.save(user);
 
-        sendVerificationEmail(email, user.getVerificationCode(),"register");
+        userRepository.save(user);
+        sendVerificationEmail(email, user.getVerificationCode(), "register");
 
         return user;
     }
+
 
 
 

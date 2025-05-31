@@ -1,8 +1,11 @@
 package com.example.app_server.Roles;
 
 import com.example.app_server.BookingDetails.*;
+import com.example.app_server.SubscriptionDetails.Subscription;
+import com.example.app_server.UserAccountCreation.User;
 import com.example.app_server.security.EncryptionUtil;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -140,6 +143,9 @@ public class AdminService {
         return String.format("%sST%03d", subAdminId, nextNumber);
     }
 
+    public List<RoleUser> getAllSubAdminsByRole(Role role) {
+        return roleuserRepository.findByRole(role);
+    }
 
     public void removeStaff(String staffId) {
         if (!roleuserRepository.existsById(staffId)) {
@@ -252,4 +258,74 @@ public class AdminService {
             default -> throw new IllegalArgumentException("Invalid booking type: " + bookingType);
         };
     }
+
+    @Transactional
+    public List<SubscriptionDTO> getClientsAssignedToSubAdmin(String subAdminId, Role role) {
+        RoleUser subAdmin = roleuserRepository.findById(subAdminId)
+                .orElseThrow(() -> new RuntimeException("Sub-admin not found"));
+
+        return switch (role) {
+            case DOCTOR -> doctorBookingRepository.findByAssignedTo(subAdmin)
+                    .stream()
+                    .map(b -> toDTO(b.getSubscription()))
+                    .distinct()
+                    .toList();
+
+            case DIETICIAN -> dieticianBookingRepository.findByAssignedTo(subAdmin)
+                    .stream()
+                    .map(b -> toDTO(b.getSubscription()))
+                    .distinct()
+                    .toList();
+
+            case PHYSIO -> physiotherapistBookingRepository.findByAssignedTo(subAdmin)
+                    .stream()
+                    .map(b -> toDTO(b.getSubscription()))
+                    .distinct()
+                    .toList();
+
+            case PHLEBOTOMIST -> phlebotomistBookingRepository.findByAssignedTo(subAdmin)
+                    .stream()
+                    .map(b -> toDTO(b.getSubscription()))
+                    .distinct()
+                    .toList();
+
+            case COUNSELLOR -> counsellorBookingRepository.findByAssignedTo(subAdmin)
+                    .stream()
+                    .map(b -> toDTO(b.getSubscription()))
+                    .distinct()
+                    .toList();
+
+            default -> throw new RuntimeException("Invalid role");
+        };
+    }
+
+    private SubscriptionDTO toDTO(Subscription subscription) {
+        User user = subscription.getUser(); // Make sure this is eagerly loaded
+        UserSummaryDTO userSummary = toUserSummaryDTO(user);
+
+        return new SubscriptionDTO(
+                subscription.getDnlId(),
+                subscription.getProduct().getProductName(), // ensure product is eagerly fetched
+                userSummary
+        );
+    }
+
+    private UserSummaryDTO toUserSummaryDTO(User user) {
+        return new UserSummaryDTO(
+                user.getMrnId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getOccupation(),
+                user.getHeight(),
+                user.getWeight()
+        );
+    }
+
+    public List<RoleUser> getUsersByRole(Role role) {
+        return roleuserRepository.findByRole(role);
+    }
+
+
 }

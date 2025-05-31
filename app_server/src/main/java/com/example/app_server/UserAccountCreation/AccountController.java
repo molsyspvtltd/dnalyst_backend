@@ -371,9 +371,16 @@ public class AccountController {
     @PostMapping("/create")
     public ResponseEntity<String> createAccount(@RequestBody @Valid UserCreationRequest request) {
         logger.info("Creating account for email: {}", request.getEmail());
-        User user = accountService.createAccount(request.getEmail(), request.getPassword()); // ✅ Pass the password
+
+        accountService.createAccount(
+                request.getEmail(),
+                request.getPassword(),
+                request.getConfirmPassword()
+        );
+
         return ResponseEntity.ok("Account created successfully and a Verification code is sent to your email");
     }
+
 
 
     @PostMapping("/verify")
@@ -623,7 +630,8 @@ class UserCreationRequest {
     private String email;
     @NotBlank
     private String password;
-
+    @NotBlank
+    private String confirmPassword;
     // Getters and Setters
 
     public String getEmail() {
@@ -640,6 +648,14 @@ class UserCreationRequest {
 
     public void setPassword(@NotBlank String password) {
         this.password = password;
+    }
+
+    public @NotBlank String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(@NotBlank String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 }
 
